@@ -754,7 +754,3 @@ Conclusion
 ==========
 
 Well... that's it. It was a lot, and not very in-depth, but you should now have a pretty good idea of how to clean/examine/analyze your data in the future!
-
-Pretty soon, you too can fully exert your will on technology, much like the goal-scoring robot below.
-
-![](robot_soccer.gif)
