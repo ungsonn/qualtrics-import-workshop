@@ -251,7 +251,7 @@ div.tocify {
 </div>
 
 
-<p>Created: 2018-11-26 | <em>Last updated: 2018-12-05 09:17:56</em></p>
+<p>Created: 2018-11-26 | <em>Last updated: 2018-12-05 09:22:11</em></p>
 <p>In this document, I will walk you through my process of using R to (1) <strong>Import and tidy</strong> raw Qualtrics data, (2) <strong>Calculate</strong> variables, and (3) <strong>Analyze</strong> that data.</p>
 <p>This document contains code snippets and their respective output, but you can easily copy and paste the code below and adapt it for your own data and analyses!</p>
 <div id="preliminaries" class="section level1">
@@ -630,14 +630,8 @@ data[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>
 <pre><code>##     mean 
 ## 32.06364</code></pre>
 <p>Another way is using the <code>describe()</code> function from the <code>psych</code> package:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(psych)</code></pre></div>
-<pre><code>## Loading required package: psych</code></pre>
-<pre><code>## 
-## Attaching package: 'psych'</code></pre>
-<pre><code>## The following objects are masked from 'package:ggplot2':
-## 
-##     %+%, alpha</code></pre>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">describe</span>(data<span class="op">$</span>age)</code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">require</span>(psych)
+<span class="kw">describe</span>(data<span class="op">$</span>age)</code></pre></div>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
 {"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["vars"],"name":[1],"type":["dbl"],"align":["right"]},{"label":["n"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["mean"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["sd"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["median"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["trimmed"],"name":[6],"type":["dbl"],"align":["right"]},{"label":["mad"],"name":[7],"type":["dbl"],"align":["right"]},{"label":["min"],"name":[8],"type":["dbl"],"align":["right"]},{"label":["max"],"name":[9],"type":["dbl"],"align":["right"]},{"label":["range"],"name":[10],"type":["dbl"],"align":["right"]},{"label":["skew"],"name":[11],"type":["dbl"],"align":["right"]},{"label":["kurtosis"],"name":[12],"type":["dbl"],"align":["right"]},{"label":["se"],"name":[13],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"110","3":"32.06364","4":"10.05971","5":"30","6":"30.09091","7":"2.9652","8":"20","9":"72","10":"52","11":"1.99163","12":"3.705879","13":"0.9591556","_rn_":"X1"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
