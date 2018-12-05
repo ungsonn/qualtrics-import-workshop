@@ -251,31 +251,272 @@ div.tocify {
 </div>
 
 
-<p>Created: 2018-11-26 | <em>Last updated: 2018-11-26 20:30:13</em></p>
+<p>Created: 2018-11-26 | <em>Last updated: 2018-12-04 22:00:55</em></p>
+<p>In this document, I will walk you through my process of using R to (1) <strong>Import and tidy</strong> raw Qualtrics data, (2) <strong>Calculate</strong> variables, and (3) <strong>Analyze</strong> that data.</p>
+<p>This document contains code snippets and their respective output, but you can easily copy and paste the code below and adapt it for your own data and analyses!</p>
 <div id="preliminaries" class="section level1">
 <h1>Preliminaries</h1>
-<p>First, load the <code>tidyverse</code> package. If you don’t have this package installed, uncomment <code>#install.packages(&quot;tidyverse&quot;)</code> and run that code to install the package. You only need to install pacakges once, but you need to load the package using <code>require()</code> or <code>library()</code> (they’re the same) every time you start a new R session.</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#install.packages(&quot;tidyverse&quot;)</span>
-<span class="kw">require</span>(tidyverse)</code></pre></div>
 <div id="study-design-and-variables" class="section level2">
 <h2>Study Design and Variables</h2>
-<p>The sample data come from a <strong>3</strong> (Tweet: animal-themed vs. non-animal themed vs. none) x <strong>2</strong> (Animal: cat vs. dog) mixed design study.</p>
-<p>Independent Variables: * <strong>Tweet</strong> was the between-subjects variable: Participants either viewed (1) funny animal-themed tweets [<em>Animal</em> condition], (2) funny non-animal funny tweets [<em>Funny</em> condition], or (3) no tweets tweets [<em>Baseline</em>]. * <strong>Animal</strong> was the within-subjects variable. Participants completed the shortened Big Five Inventory (BFI) in the third-“person” with regards to a (1) <em>dog</em> and (2) <em>cat</em>, in counterbalanced order.</p>
-<p>Dependent Variable: The BFI has five subscales: <strong>Openness to Experience, Conscientiousness, Extraversion, Agreeableness, Neuroticism</strong>. Extraversion and Agreeableness were measured using three items; the remaining subscales were measured using two items. Each item was scored on a scale of 1 ro 5, with higher scores indicating “more” of that trait.</p>
-<ul>
-<li>Import Qualtrics Raw Data</li>
-</ul>
-<p>Import the “fresh” raw data from Qualtrics and save as a dataframe called <code>raw</code>. As long as this R Markdown document is in the same directory as <code>&quot;raw qualtrics data.csv&quot;</code>, that’s all you need to put in <code>read.csv()</code>.</p>
+<p>The sample data come from a <strong>3</strong> (Tweet: animal vs. funny vs. baseline) x <strong>2</strong> (Animal: cat vs. dog) mixed design study.</p>
+<p>Independent Variables: * <strong>Tweet</strong> was the between-subjects variable: Participants either viewed (1) funny animal-themed tweets [<em>Animal</em> condition], (2) funny non-animal funny tweets [<em>Funny</em> condition], or (3) no tweets [<em>Baseline</em>]. * <strong>Animal</strong> was the within-subjects variable. Participants completed the shortened Big Five Inventory (BFI, see below) in the third-“person” with regards to a (1) <em>dog</em> and (2) <em>cat</em>, in counterbalanced order.</p>
+<p>Dependent Variable: The BFI has five subscales: <strong>Openness to Experience, Conscientiousness, Extraversion, Agreeableness, Neuroticism</strong>. Extraversion and Agreeableness were measured using three items; the remaining subscales were measured using two items. Each item was scored on a scale of 1 to 5, with higher scores indicating “more” of that trait.</p>
+<p>Other Measured Variables: For each of the six tweets (if participants were assigned to <em>Animal</em> or <em>Funny</em> conditions), participants answered three questions regarding perceived funniness, likilihood to “fav”, and likelihood to “share” that tweet on a scale from 1 (<em>not at all funny</em>/<em>not at all likely</em>) to 5 (<em>extremely funny</em>/<em>extremely likely</em>).</p>
+</div>
+<div id="load-r-packages" class="section level2">
+<h2>Load R Packages</h2>
+<p>First, load the <code>tidyverse</code> package. If you don’t have this package installed, running <code>install.packages(&quot;tidyverse&quot;)</code> (which is commented out in the code below) will install the package. You only need to install each package once, but you need to load the package using <code>require()</code> or <code>library()</code> (they’re the same) every time you start a new R session. The <code>tidyverse</code> package includes and automatically loads other cool packages, like `<code>ggplot</code> and <code>dplyr</code>, so you don’t have to individually load those if you are loading the entire “tidyverse,” so to speak.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#install.packages(&quot;tidyverse&quot;)</span>
+<span class="kw">require</span>(tidyverse)</code></pre></div>
+</div>
+</div>
+<div id="import-and-tidy" class="section level1">
+<h1>Import and Tidy</h1>
+<div id="import-raw-data" class="section level2">
+<h2>Import raw data</h2>
+<p>First, import the “fresh” raw data from Qualtrics and save as a dataframe called <code>raw</code>. As long as the current R Markdown document is in the same directory as <code>&quot;raw qualtrics data.csv&quot;</code>, the full file name is all you need to put in <code>read.csv()</code>.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">raw &lt;-<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;raw qualtrics data.csv&quot;</span>, 
                 <span class="dt">header =</span> <span class="ot">TRUE</span>, 
                 <span class="dt">stringsAsFactors =</span> <span class="ot">FALSE</span>)</code></pre></div>
-<p>First, let’s take a look at the first 10 rows and first 10 columns of <code>raw</code>.</p>
+<p>Before moving on, convert <code>raw</code> to a tibble (pun on “table”?), which works much more nicely than data frames with the <code>dplyr</code> package (which is automatically loaded as part of the <code>tidyverse</code>).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># coerce to tibble</span>
+raw &lt;-<span class="st"> </span><span class="kw">as_tibble</span>(raw)</code></pre></div>
+</div>
+<div id="tidy" class="section level2">
+<h2>Tidy</h2>
+<p><strong>Remove superfluous rows</strong> First, let’s take a look at the first 10 rows and first 5 columns of <code>raw</code>. You can click the arrows in the output below to scroll through the columns.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">raw[<span class="dv">1</span><span class="op">:</span><span class="dv">10</span>, <span class="dv">1</span><span class="op">:</span><span class="dv">5</span>]</code></pre></div>
 <div data-pagedtable="false">
 <script data-pagedtable-source type="application/json">
-{"columns":[{"label":[""],"name":["_rn_"],"type":[""],"align":["left"]},{"label":["StartDate"],"name":[1],"type":["chr"],"align":["left"]},{"label":["EndDate"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Status"],"name":[3],"type":["chr"],"align":["left"]},{"label":["IPAddress"],"name":[4],"type":["chr"],"align":["left"]},{"label":["Progress"],"name":[5],"type":["chr"],"align":["left"]}],"data":[{"1":"Start Date","2":"End Date","3":"Response Type","4":"IP Address","5":"Progress","_rn_":"1"},{"1":"{\"ImportId\":\"startDate\",\"timeZone\":\"America/New_York\"}","2":"{\"ImportId\":\"endDate\",\"timeZone\":\"America/New_York\"}","3":"{\"ImportId\":\"status\"}","4":"{\"ImportId\":\"ipAddress\"}","5":"{\"ImportId\":\"progress\"}","_rn_":"2"},{"1":"2018-11-19 13:43:56","2":"2018-11-19 13:47:54","3":"0","4":"128.180.132.125","5":"100","_rn_":"3"},{"1":"2018-11-19 13:52:30","2":"2018-11-19 13:59:47","3":"0","4":"128.180.132.247","5":"100","_rn_":"4"},{"1":"2018-11-19 14:03:10","2":"2018-11-19 14:05:22","3":"0","4":"64.121.123.36","5":"100","_rn_":"5"},{"1":"2018-11-19 14:05:55","2":"2018-11-19 14:11:28","3":"0","4":"128.180.107.57","5":"100","_rn_":"6"},{"1":"2018-11-19 14:13:10","2":"2018-11-19 14:17:11","3":"0","4":"128.180.96.119","5":"100","_rn_":"7"},{"1":"2018-11-19 14:17:16","2":"2018-11-19 14:22:58","3":"0","4":"70.167.95.125","5":"100","_rn_":"8"},{"1":"2018-11-19 14:24:51","2":"2018-11-19 14:28:29","3":"0","4":"149.31.125.184","5":"100","_rn_":"9"},{"1":"2018-11-19 14:39:23","2":"2018-11-19 14:43:37","3":"0","4":"149.31.82.101","5":"100","_rn_":"10"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+{"columns":[{"label":["StartDate"],"name":[1],"type":["chr"],"align":["left"]},{"label":["EndDate"],"name":[2],"type":["chr"],"align":["left"]},{"label":["Status"],"name":[3],"type":["chr"],"align":["left"]},{"label":["IPAddress"],"name":[4],"type":["chr"],"align":["left"]},{"label":["Progress"],"name":[5],"type":["chr"],"align":["left"]}],"data":[{"1":"Start Date","2":"End Date","3":"Response Type","4":"IP Address","5":"Progress"},{"1":"{\"ImportId\":\"startDate\",\"timeZone\":\"America/New_York\"}","2":"{\"ImportId\":\"endDate\",\"timeZone\":\"America/New_York\"}","3":"{\"ImportId\":\"status\"}","4":"{\"ImportId\":\"ipAddress\"}","5":"{\"ImportId\":\"progress\"}"},{"1":"2018-11-19 13:43:56","2":"2018-11-19 13:47:54","3":"0","4":"128.180.132.125","5":"100"},{"1":"2018-11-19 13:52:30","2":"2018-11-19 13:59:47","3":"0","4":"128.180.132.247","5":"100"},{"1":"2018-11-19 14:03:10","2":"2018-11-19 14:05:22","3":"0","4":"64.121.123.36","5":"100"},{"1":"2018-11-19 14:05:55","2":"2018-11-19 14:11:28","3":"0","4":"128.180.107.57","5":"100"},{"1":"2018-11-19 14:13:10","2":"2018-11-19 14:17:11","3":"0","4":"128.180.96.119","5":"100"},{"1":"2018-11-19 14:17:16","2":"2018-11-19 14:22:58","3":"0","4":"70.167.95.125","5":"100"},{"1":"2018-11-19 14:24:51","2":"2018-11-19 14:28:29","3":"0","4":"149.31.125.184","5":"100"},{"1":"2018-11-19 14:39:23","2":"2018-11-19 14:43:37","3":"0","4":"149.31.82.101","5":"100"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
   </script>
 </div>
+<p>Something that should jump out at you is that rows 1 and 2 contain unnecessary information. Row 1 simply repeats the question labels; although for later columns, this row contains question wording and you could need them for some studies. Row 2 contains metadata for each question. For our purposes, you don’t want either of them. <strong>Remove rows 1 and 2</strong> by using indexing (<code>[]</code>) and using the negative sign (<code>-</code>) to exclude rows 1 and 2 (<code>-c(1:2)</code>) and overwrite <code>raw</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># remove 1st and 2nd row (unnecessary qualtrics metadata)</span>
+raw &lt;-<span class="st"> </span>raw[<span class="op">-</span><span class="kw">c</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>), ]</code></pre></div>
+<p><strong>Remove superfluous columns</strong> Next, let’s take a look at the column headings in <code>raw</code>.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">colnames</span>(raw)</code></pre></div>
+<pre><code>##  [1] &quot;StartDate&quot;             &quot;EndDate&quot;              
+##  [3] &quot;Status&quot;                &quot;IPAddress&quot;            
+##  [5] &quot;Progress&quot;              &quot;Duration..in.seconds.&quot;
+##  [7] &quot;Finished&quot;              &quot;RecordedDate&quot;         
+##  [9] &quot;ResponseId&quot;            &quot;RecipientLastName&quot;    
+## [11] &quot;RecipientFirstName&quot;    &quot;RecipientEmail&quot;       
+## [13] &quot;ExternalReference&quot;     &quot;LocationLatitude&quot;     
+## [15] &quot;LocationLongitude&quot;     &quot;DistributionChannel&quot;  
+## [17] &quot;UserLanguage&quot;          &quot;anim1_1&quot;              
+## [19] &quot;anim1_2&quot;               &quot;anim1_3&quot;              
+## [21] &quot;anim2_1&quot;               &quot;anim2_2&quot;              
+## [23] &quot;anim2_3&quot;               &quot;anim3_1&quot;              
+## [25] &quot;anim3_2&quot;               &quot;anim3_3&quot;              
+## [27] &quot;anim4_1&quot;               &quot;anim4_2&quot;              
+## [29] &quot;anim4_3&quot;               &quot;anim5_1&quot;              
+## [31] &quot;anim5_2&quot;               &quot;anim5_3&quot;              
+## [33] &quot;anim6_1&quot;               &quot;anim6_2&quot;              
+## [35] &quot;anim6_3&quot;               &quot;fun1_1&quot;               
+## [37] &quot;fun1_2&quot;                &quot;fun1_3&quot;               
+## [39] &quot;fun2_1&quot;                &quot;fun2_2&quot;               
+## [41] &quot;fun2_3&quot;                &quot;fun3_1&quot;               
+## [43] &quot;fun3_2&quot;                &quot;fun3_3&quot;               
+## [45] &quot;fun4_1&quot;                &quot;fun4_2&quot;               
+## [47] &quot;fun4_3&quot;                &quot;fun5_1&quot;               
+## [49] &quot;fun5_2&quot;                &quot;fun5_3&quot;               
+## [51] &quot;fun6_1&quot;                &quot;fun6_2&quot;               
+## [53] &quot;fun6_3&quot;                &quot;dog_extra1r&quot;          
+## [55] &quot;dog_extra3&quot;            &quot;dog_agree1&quot;           
+## [57] &quot;dog_agree3&quot;            &quot;dog_cons1r&quot;           
+## [59] &quot;dog_neur1r&quot;            &quot;dog_open1r&quot;           
+## [61] &quot;dog_extra2&quot;            &quot;dog_agree2r&quot;          
+## [63] &quot;dog_cons2&quot;             &quot;dog_neur2&quot;            
+## [65] &quot;dog_open2&quot;             &quot;cat_extra1r&quot;          
+## [67] &quot;cat_extra3&quot;            &quot;cat_agree1&quot;           
+## [69] &quot;cat_agree3&quot;            &quot;cat_cons1r&quot;           
+## [71] &quot;cat_neur1r&quot;            &quot;cat_open1r&quot;           
+## [73] &quot;cat_extra2&quot;            &quot;cat_agree2r&quot;          
+## [75] &quot;cat_cons2&quot;             &quot;cat_neur2&quot;            
+## [77] &quot;cat_open2&quot;             &quot;age&quot;                  
+## [79] &quot;gender&quot;                &quot;gender_fr&quot;            
+## [81] &quot;lehigh_status&quot;         &quot;check_manipulation&quot;   
+## [83] &quot;condition&quot;</code></pre>
+<p>The variable <code>$anim1_2</code> is the first variable that is part of experimental study. However, you can see that Qualtrics has added 17 variables/columns to the beginning of our data. Sometimes you may want to retain some of them (e.g., <code>$StartDate</code> or <code>$EndDate</code>), but for now let’s only keep study progress (<code>$Progress</code>) measured from 0-100, and time of completion (<code>$Duration..in.seconds.</code>) measured in second.</p>
+<p>Use the <code>select()</code> function to choose which variables to keep from <code>raw</code> and to rename when necessary (e.g., <code>$Duration..in.seconds.</code> is renamed as <code>$time_sec</code>). Importantly, since you are now excluding variables, create a new data frame called <code>data</code>. This way, the raw data remains untouched (apart from removing the first two rows) in case you need to go back to it later.</p>
+<p><em>Note</em>: The code below uses the pipe operator <code>%&gt;%</code> from the <code>dplyr</code> package. Basically, the operator takes whatever came before it (below, the <code>raw</code> data) and subjects it to what comes after: selecting variables using <code>select()</code>. One great thing about <code>dplyr</code> is you won’t have to use the <code>$</code> operator to identify variables as much. Check out the following guides on <code>dplyr</code> that I return to <em>all the time</em>:</p>
+<ul>
+<li><a href="https://cran.r-project.org/web/packages/dplyr/vignettes/dplyr.html">Introduction to dplyr</a></li>
+<li><a href="http://genomicsclass.github.io/book/pages/dplyr_tutorial.html">dplyr tutorial by MIT Biomedical Data Science</a></li>
+</ul>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>raw <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="dt">progress =</span> Progress,
+         <span class="dt">time_sec =</span> Duration..in.seconds., 
+         <span class="co"># select all variables between $anim1_1 and $anim6_3</span>
+         anim1_<span class="dv">1</span><span class="op">:</span>anim6_<span class="dv">3</span>, 
+         <span class="co"># select all variables that contain &quot;fun&quot;</span>
+         <span class="kw">contains</span>(<span class="st">&quot;fun&quot;</span>), 
+         <span class="co"># select all dog and cat variables in order I specify</span>
+         dog_extra1r, dog_extra2, dog_extra3, 
+         dog_agree1, dog_agree2r, dog_agree3, 
+         dog_cons1r, dog_cons2, 
+         dog_neur1r, dog_neur2, 
+         dog_open1r, dog_open2, 
+         cat_extra1r, cat_extra2, cat_extra3, 
+         cat_agree1, cat_agree2r, cat_agree3, 
+         cat_cons1r, cat_cons2, 
+         cat_neur1r, cat_neur2, 
+         cat_open1r, cat_open2, 
+         <span class="co"># select all variables between age and condition</span>
+         age<span class="op">:</span>condition)</code></pre></div>
+<p>Great! Now we have a working <code>data</code> dataframe that we can start to mess around with. Remember, you can always do stuff like <code>colnames(data)</code>, <code>glimpse(data)</code>, or <code>str(data)</code> to investigate anything further.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># look at variables in 'data'</span>
+<span class="kw">colnames</span>(data)</code></pre></div>
+<pre><code>##  [1] &quot;progress&quot;           &quot;time_sec&quot;           &quot;anim1_1&quot;           
+##  [4] &quot;anim1_2&quot;            &quot;anim1_3&quot;            &quot;anim2_1&quot;           
+##  [7] &quot;anim2_2&quot;            &quot;anim2_3&quot;            &quot;anim3_1&quot;           
+## [10] &quot;anim3_2&quot;            &quot;anim3_3&quot;            &quot;anim4_1&quot;           
+## [13] &quot;anim4_2&quot;            &quot;anim4_3&quot;            &quot;anim5_1&quot;           
+## [16] &quot;anim5_2&quot;            &quot;anim5_3&quot;            &quot;anim6_1&quot;           
+## [19] &quot;anim6_2&quot;            &quot;anim6_3&quot;            &quot;fun1_1&quot;            
+## [22] &quot;fun1_2&quot;             &quot;fun1_3&quot;             &quot;fun2_1&quot;            
+## [25] &quot;fun2_2&quot;             &quot;fun2_3&quot;             &quot;fun3_1&quot;            
+## [28] &quot;fun3_2&quot;             &quot;fun3_3&quot;             &quot;fun4_1&quot;            
+## [31] &quot;fun4_2&quot;             &quot;fun4_3&quot;             &quot;fun5_1&quot;            
+## [34] &quot;fun5_2&quot;             &quot;fun5_3&quot;             &quot;fun6_1&quot;            
+## [37] &quot;fun6_2&quot;             &quot;fun6_3&quot;             &quot;dog_extra1r&quot;       
+## [40] &quot;dog_extra2&quot;         &quot;dog_extra3&quot;         &quot;dog_agree1&quot;        
+## [43] &quot;dog_agree2r&quot;        &quot;dog_agree3&quot;         &quot;dog_cons1r&quot;        
+## [46] &quot;dog_cons2&quot;          &quot;dog_neur1r&quot;         &quot;dog_neur2&quot;         
+## [49] &quot;dog_open1r&quot;         &quot;dog_open2&quot;          &quot;cat_extra1r&quot;       
+## [52] &quot;cat_extra2&quot;         &quot;cat_extra3&quot;         &quot;cat_agree1&quot;        
+## [55] &quot;cat_agree2r&quot;        &quot;cat_agree3&quot;         &quot;cat_cons1r&quot;        
+## [58] &quot;cat_cons2&quot;          &quot;cat_neur1r&quot;         &quot;cat_neur2&quot;         
+## [61] &quot;cat_open1r&quot;         &quot;cat_open2&quot;          &quot;age&quot;               
+## [64] &quot;gender&quot;             &quot;gender_fr&quot;          &quot;lehigh_status&quot;     
+## [67] &quot;check_manipulation&quot; &quot;condition&quot;</code></pre>
+<p>As part of importing data, R sometimes makes choices about what kind of data type each variable is (e.g., numeric, string, etc.), so the code below will ensure that the variables I <em>want</em> to be numeric are actually recognized as numeric by R. We’ll do this using the now-familiar pipe operator (<code>%&gt;%</code>) and <code>mutate_at()</code> (<a href="https://twitter.com/SuzanBaert/status/984054401374523392">source</a>). For this example, I’m going to make everything numeric except <code>$gender_fr</code>, a free response item on which participants could specify their gender.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># coerce variables to numeric using column index</span>
+data &lt;-<span class="st"> </span>data <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate_at</span>(<span class="kw">vars</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">64</span>, <span class="dv">66</span><span class="op">:</span><span class="dv">68</span>), as.numeric)</code></pre></div>
+</div>
+<div id="exclude-subjects" class="section level2">
+<h2>Exclude subjects</h2>
+<p>For the current study, we will exclude any participants who <strong>did not complete the study</strong>. First, use <code>table()</code> to look at the frequencies of <code>$progress</code>. (<em>Note</em>: <code>table()</code> is my go-to function for getting frequencies; e.g., gender)</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># frequency of progress</span>
+<span class="kw">table</span>(data<span class="op">$</span>progress)</code></pre></div>
+<pre><code>## 
+##   1   2  31  35  40  44  59  75  91  99 100 
+##   1   1   3   2   2   1  10   6   1  12 105</code></pre>
+<p>105 participants completely finished (<code>$progress == 100</code>), 12 got 99% of the way through, and then there’s a smattering of others. This is something you’ll have to decide for your studies; for now, exclude anyone who was below 99% completion.</p>
+<p>Notice that the code below uses the pipe operator <code>%&gt;%</code> from the <code>dplyr</code> package again. However instead of using <code>select()</code> to identify variables/columns to keep/drop, use <code>filter()</code> to identify participants/rows to keep/drop:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># keep only participants with at least 99% completion</span>
+data &lt;-<span class="st"> </span>data <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(progress <span class="op">&gt;=</span><span class="st"> </span><span class="dv">99</span>)</code></pre></div>
+<p>Next, exclude any participants <strong>failed the manipulation check</strong>; participants were asked to identify which tweet condition they were exposed to. Before that, though, let’s see how many participants failed the check using <code>nrow()</code> and indexing. Note that you must use <code>data$</code> before variables because we are not using <code>dplyr</code> for this:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># in how many rows does check_manipulation not equal condition?</span>
+<span class="kw">nrow</span>(data[data<span class="op">$</span>check_manipulation <span class="op">!=</span><span class="st"> </span>data<span class="op">$</span>condition, ])</code></pre></div>
+<pre><code>## [1] 7</code></pre>
+<p>Ok so <code>nrow(data[data$check_manipulation != data$condition, ])</code> check failures. Use <code>filter()</code> to only include those who passed the check (i.e., if <code>check_manipulation == condition</code>).</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>data <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(check_manipulation <span class="op">==</span><span class="st"> </span>condition)</code></pre></div>
+</div>
+<div id="add-participant-number" class="section level2">
+<h2>Add participant number</h2>
+<p>Next, add a unique participant number variable. If your own study already includes a participant number variable or unique identifier, this would be unnecessary. But having a unique subject variable for each participant is crucial for calculating participant-level variables (e.g., scale means). You’ll be using another <code>dplyr</code> verb: <code>mutate()</code>, which is used to compute new variables:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>data <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">participant =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">n</span>())</code></pre></div>
+</div>
+<div id="concatenate-across-between-subjects-variables" class="section level2">
+<h2>Concatenate across between-subjects variables</h2>
+<p>The last thing to do tidy this data is to deal with missing values (also known as <code>NA</code>s) that have arisen due to between-subjects variables. For example, participants in the Animal tweet condition made ratings about the animal tweets they saw (e.g., <code>$anim1_1</code>, <code>$anim1_2</code>) but did not answer–and therefore have missing values–for all tweet items corresponding to the Funny tweet condition (e.g., <code>$fun1_1</code>, <code>$fun1_2</code>). As a demonstration of this:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># sample of NA's across animal vs. funny tweet items</span>
+data[<span class="dv">1</span><span class="op">:</span><span class="dv">4</span>, <span class="kw">c</span>(<span class="dv">69</span>, <span class="dv">3</span><span class="op">:</span><span class="dv">5</span>, <span class="dv">21</span><span class="op">:</span><span class="dv">22</span>)]</code></pre></div>
+<div data-pagedtable="false">
+<script data-pagedtable-source type="application/json">
+{"columns":[{"label":["participant"],"name":[1],"type":["int"],"align":["right"]},{"label":["anim1_1"],"name":[2],"type":["dbl"],"align":["right"]},{"label":["anim1_2"],"name":[3],"type":["dbl"],"align":["right"]},{"label":["anim1_3"],"name":[4],"type":["dbl"],"align":["right"]},{"label":["fun1_1"],"name":[5],"type":["dbl"],"align":["right"]},{"label":["fun1_2"],"name":[6],"type":["dbl"],"align":["right"]}],"data":[{"1":"1","2":"NA","3":"NA","4":"NA","5":"2","6":"1"},{"1":"2","2":"4","3":"4","4":"2","5":"NA","6":"NA"},{"1":"3","2":"NA","3":"NA","4":"NA","5":"NA","6":"NA"},{"1":"4","2":"4","3":"2","4":"3","5":"NA","6":"NA"}],"options":{"columns":{"min":{},"max":[10]},"rows":{"min":[10],"max":[10]},"pages":{}}}
+  </script>
+</div>
+<p>Here we can see that participant #1 was in the Funny condition, participant #2 was in the Animal condition, and participant #3 was in the Baseline condition (<code>NA</code> for all tiems). To concatenate across these columns and create new variables, use <code>coalesce()</code> within the now-familiar <code>mutate()</code> function. The code below may look clunky, and I’m sure you could write a function to this more elegantly, but it definitely works.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>data <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">tweet1_1 =</span> <span class="kw">coalesce</span>(anim1_<span class="dv">1</span>, fun1_<span class="dv">1</span>), 
+         <span class="dt">tweet1_2 =</span> <span class="kw">coalesce</span>(anim1_<span class="dv">2</span>, fun1_<span class="dv">2</span>),
+         <span class="dt">tweet1_3 =</span> <span class="kw">coalesce</span>(anim1_<span class="dv">3</span>, fun1_<span class="dv">3</span>), 
+         <span class="dt">tweet2_1 =</span> <span class="kw">coalesce</span>(anim2_<span class="dv">1</span>, fun2_<span class="dv">1</span>), 
+         <span class="dt">tweet2_2 =</span> <span class="kw">coalesce</span>(anim2_<span class="dv">2</span>, fun2_<span class="dv">2</span>),
+         <span class="dt">tweet2_3 =</span> <span class="kw">coalesce</span>(anim2_<span class="dv">3</span>, fun2_<span class="dv">3</span>), 
+         <span class="dt">tweet3_1 =</span> <span class="kw">coalesce</span>(anim3_<span class="dv">1</span>, fun3_<span class="dv">1</span>), 
+         <span class="dt">tweet3_2 =</span> <span class="kw">coalesce</span>(anim3_<span class="dv">2</span>, fun3_<span class="dv">2</span>),
+         <span class="dt">tweet3_3 =</span> <span class="kw">coalesce</span>(anim3_<span class="dv">3</span>, fun3_<span class="dv">3</span>), 
+         <span class="dt">tweet4_1 =</span> <span class="kw">coalesce</span>(anim4_<span class="dv">1</span>, fun4_<span class="dv">1</span>), 
+         <span class="dt">tweet4_2 =</span> <span class="kw">coalesce</span>(anim4_<span class="dv">2</span>, fun4_<span class="dv">2</span>),
+         <span class="dt">tweet4_3 =</span> <span class="kw">coalesce</span>(anim4_<span class="dv">3</span>, fun4_<span class="dv">3</span>), 
+         <span class="dt">tweet5_1 =</span> <span class="kw">coalesce</span>(anim5_<span class="dv">1</span>, fun5_<span class="dv">1</span>), 
+         <span class="dt">tweet5_2 =</span> <span class="kw">coalesce</span>(anim5_<span class="dv">2</span>, fun5_<span class="dv">2</span>),
+         <span class="dt">tweet5_3 =</span> <span class="kw">coalesce</span>(anim5_<span class="dv">3</span>, fun5_<span class="dv">3</span>), 
+         <span class="dt">tweet6_1 =</span> <span class="kw">coalesce</span>(anim6_<span class="dv">1</span>, fun6_<span class="dv">1</span>), 
+         <span class="dt">tweet6_2 =</span> <span class="kw">coalesce</span>(anim6_<span class="dv">2</span>, fun6_<span class="dv">2</span>),
+         <span class="dt">tweet6_3 =</span> <span class="kw">coalesce</span>(anim6_<span class="dv">3</span>, fun6_<span class="dv">3</span>))
+
+<span class="co"># if you want to check out the variables</span>
+<span class="co">#colnames(data)</span></code></pre></div>
+</div>
+<div id="tidy-done" class="section level2">
+<h2>Tidy: Done!</h2>
+<p><strong>Okay the data is now pretty tidy</strong>. Many of the operations above were done separately to help explain the logic, but you could easily string many of the dplyr commands together depending on your needs/wants/desires. The code below would produce the exact same tidied data set.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>raw <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">select</span>(<span class="dt">progress =</span> Progress,
+         <span class="dt">time_sec =</span> Duration..in.seconds., 
+         anim1_<span class="dv">1</span><span class="op">:</span>anim6_<span class="dv">3</span>, 
+         <span class="kw">contains</span>(<span class="st">&quot;fun&quot;</span>), 
+         dog_extra1r, dog_extra2, dog_extra3, 
+         dog_agree1, dog_agree2r, dog_agree3, 
+         dog_cons1r, dog_cons2, 
+         dog_neur1r, dog_neur2, 
+         dog_open1r, dog_open2, 
+         cat_extra1r, cat_extra2, cat_extra3, 
+         cat_agree1, cat_agree2r, cat_agree3, 
+         cat_cons1r, cat_cons2, 
+         cat_neur1r, cat_neur2, 
+         cat_open1r, cat_open2, 
+         age<span class="op">:</span>condition) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate_at</span>(<span class="kw">vars</span>(<span class="dv">1</span><span class="op">:</span><span class="dv">64</span>, <span class="dv">66</span><span class="op">:</span><span class="dv">68</span>), as.numeric) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(progress <span class="op">&gt;=</span><span class="st"> </span><span class="dv">99</span>) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">filter</span>(check_manipulation <span class="op">==</span><span class="st"> </span>condition) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">participant =</span> <span class="dv">1</span><span class="op">:</span><span class="kw">n</span>(), 
+         <span class="dt">tweet1_1 =</span> <span class="kw">coalesce</span>(anim1_<span class="dv">1</span>, fun1_<span class="dv">1</span>), 
+         <span class="dt">tweet1_2 =</span> <span class="kw">coalesce</span>(anim1_<span class="dv">2</span>, fun1_<span class="dv">2</span>),
+         <span class="dt">tweet1_3 =</span> <span class="kw">coalesce</span>(anim1_<span class="dv">3</span>, fun1_<span class="dv">3</span>), 
+         <span class="dt">tweet2_1 =</span> <span class="kw">coalesce</span>(anim2_<span class="dv">1</span>, fun2_<span class="dv">1</span>), 
+         <span class="dt">tweet2_2 =</span> <span class="kw">coalesce</span>(anim2_<span class="dv">2</span>, fun2_<span class="dv">2</span>),
+         <span class="dt">tweet2_3 =</span> <span class="kw">coalesce</span>(anim2_<span class="dv">3</span>, fun2_<span class="dv">3</span>), 
+         <span class="dt">tweet3_1 =</span> <span class="kw">coalesce</span>(anim3_<span class="dv">1</span>, fun3_<span class="dv">1</span>), 
+         <span class="dt">tweet3_2 =</span> <span class="kw">coalesce</span>(anim3_<span class="dv">2</span>, fun3_<span class="dv">2</span>),
+         <span class="dt">tweet3_3 =</span> <span class="kw">coalesce</span>(anim3_<span class="dv">3</span>, fun3_<span class="dv">3</span>), 
+         <span class="dt">tweet4_1 =</span> <span class="kw">coalesce</span>(anim4_<span class="dv">1</span>, fun4_<span class="dv">1</span>), 
+         <span class="dt">tweet4_2 =</span> <span class="kw">coalesce</span>(anim4_<span class="dv">2</span>, fun4_<span class="dv">2</span>),
+         <span class="dt">tweet4_3 =</span> <span class="kw">coalesce</span>(anim4_<span class="dv">3</span>, fun4_<span class="dv">3</span>), 
+         <span class="dt">tweet5_1 =</span> <span class="kw">coalesce</span>(anim5_<span class="dv">1</span>, fun5_<span class="dv">1</span>), 
+         <span class="dt">tweet5_2 =</span> <span class="kw">coalesce</span>(anim5_<span class="dv">2</span>, fun5_<span class="dv">2</span>),
+         <span class="dt">tweet5_3 =</span> <span class="kw">coalesce</span>(anim5_<span class="dv">3</span>, fun5_<span class="dv">3</span>), 
+         <span class="dt">tweet6_1 =</span> <span class="kw">coalesce</span>(anim6_<span class="dv">1</span>, fun6_<span class="dv">1</span>), 
+         <span class="dt">tweet6_2 =</span> <span class="kw">coalesce</span>(anim6_<span class="dv">2</span>, fun6_<span class="dv">2</span>),
+         <span class="dt">tweet6_3 =</span> <span class="kw">coalesce</span>(anim6_<span class="dv">3</span>, fun6_<span class="dv">3</span>))</code></pre></div>
+</div>
+</div>
+<div id="calculate-variables" class="section level1">
+<h1>Calculate Variables</h1>
+<p>Now, it’s time to calculate some variables:</p>
+<ul>
+<li>BFI: Extraversion (cat and dog)</li>
+<li>BFI: Openness to Experience (cat and dog)</li>
+<li>BFI: Conscientiousness (cat and dog)</li>
+<li>BFI: Neuroticism (cat and dog)</li>
+<li>BFI: Agreeableness (cat and dog)</li>
+<li>Positive evaluation of tweets</li>
+</ul>
+<div id="bfi-scores" class="section level2">
+<h2>BFI Scores</h2>
+<p><strong>Extraversion</strong> was measured for each animal using 3 items: <code>$dog_extra1r</code> (reverse-coded), <code>$dog_extra2</code>, and <code>$dog_extra3</code>. Below, for each participant, calculate the mean dog extraversion by averaging these three items:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">data &lt;-<span class="st"> </span>data <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">group_by</span>(participant) <span class="op">%&gt;%</span><span class="st"> </span>
+<span class="st">  </span><span class="kw">mutate</span>(<span class="dt">dog_extra =</span> <span class="kw">mean</span>((<span class="dv">6</span> <span class="op">-</span><span class="st"> </span>dog_extra1r), </code></pre></div>
 </div>
 </div>
 
