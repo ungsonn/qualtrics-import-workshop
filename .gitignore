@@ -25,6 +25,5 @@ vignettes/*.pdf
 # Shiny token, see https://shiny.rstudio.com/articles/shinyapps.html
 rsconnect/
 .Rproj.user
-qualtrics-import.Rmd
 robot_soccer.gif
 .gitignore
