@@ -26,3 +26,5 @@ vignettes/*.pdf
 rsconnect/
 .Rproj.user
 qualtrics-import.Rmd
+robot_soccer.gif
+.gitignore
